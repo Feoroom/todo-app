@@ -1,0 +1,48 @@
+{{define "subject"}} Добро пожаловать! {{end}}
+
+{{define "plainBody"}}
+
+    Здравствуйте,
+
+    Благодарим за регистрацию на нашем сайте. Мы счастливы видеть новых клиентов!
+
+    Номер вашего индивидуального идентификатора: {{.ID}}.
+
+    Чтобы вы могли активировать свой аккаунт, пришлите данный запрос
+
+    "PUT /v1/users/activated" с таким телом:
+
+    {"token": {{.activationToken}} }
+
+    Данный токен является одноразовым и срок его хранения истекает через 3 дня.
+
+    С лучшими пожеланиями,
+
+    TodoApp Team.
+{{end}}
+
+{{define "htmlBody"}}
+
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport"
+              content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <title>Document</title>
+    </head>
+    <body>
+    <p>Здравствуйте,</p>
+    <p> Благодарим за регистрацию на нашем сайте. Мы счастливы видеть новых клиентов!</p>
+    <p> Номер вашего индивидуального идентификатора: {{.ID}}</p>
+    <p> Чтобы вы могли активировать свой аккаунт, пришлите данный запрос
+    </p>
+    <p>"PUT /v1/users/activated" с таким телом:</p>
+    <p> {"token": {{.activationToken}} }</p>
+    <p>Данный токен является одноразовым и срок его хранения истекает через 3 дня.</p>
+    <p>С лучшими пожеланиями,</p>
+    <p>TodoApp Team.</p>
+    </body>
+    </html>
+
+{{end}}

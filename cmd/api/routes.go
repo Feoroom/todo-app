@@ -25,5 +25,10 @@ func (app *application) routes() http.Handler {
 	router.POST("/v1/cards", app.createCardHandler)
 	router.PATCH("/v1/cards/:id", app.updateCardHandler)
 
+	router.POST("/v1/users", app.registerHandler)
+	router.PUT("/v1/users/activated", app.activateUserHandle)
+
+	router.POST("/v1/tokens/activation", app.sendTokenHandler)
+
 	return app.logRequests(app.recoverPanic(app.rateLimit(router)))
 }

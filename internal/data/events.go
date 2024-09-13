@@ -11,6 +11,12 @@ import (
 	"time"
 )
 
+const titleUniqueConstraintName = "events_title_check"
+const cardIdFKConstraint = "fk_card"
+
+var ErrDuplicateTitle = errors.New("duplicate title")
+var ErrCardConstraint = errors.New("card is not present in the table")
+
 type Event struct {
 	ID          int64     `json:"id" `
 	CreatedAt   time.Time `json:"-"`
@@ -63,7 +69,21 @@ func (e EventModel) Insert(event *Event) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	return e.DB.QueryRowContext(ctx, q, args...).Scan(&event.ID, &event.CreatedAt, &event.Version)
+	err := e.DB.QueryRowContext(ctx, q, args...).Scan(&event.ID, &event.CreatedAt, &event.Version)
+
+	var pgErr *pq.Error
+	if errors.As(err, &pgErr) {
+		switch {
+		case pgErr.Constraint == titleUniqueConstraintName:
+			return ErrDuplicateTitle
+		case pgErr.Constraint == cardIdFKConstraint:
+			return fmt.Errorf("%w. %s", ErrCardConstraint, pgErr.Detail)
+		default:
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (e EventModel) Get(id int64) (*Event, error) {
@@ -159,8 +179,8 @@ func (e EventModel) GetAll(title string, date Date, filters Filters) ([]*Event, 
 
 func (e EventModel) Update(event *Event) error {
 	q := `update events
-		set title=$1, description=$2, date=$3, text_blocks=$4, version = version + 1
-		where id=$5 and version=$6
+		set title=$1, description=$2, date=$3, text_blocks=$4, version = version + 1, card_id=$5
+		where id=$6 and version=$7
 		returning version`
 
 	args := []interface{}{
@@ -168,6 +188,7 @@ func (e EventModel) Update(event *Event) error {
 		event.Description,
 		event.Date.Time,
 		pq.Array(event.TextBlocks),
+		event.CardId,
 		event.ID,
 		event.Version,
 	}

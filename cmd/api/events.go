@@ -42,7 +42,17 @@ func (app *application) createEventHandler(w http.ResponseWriter, r *http.Reques
 
 	err = app.models.Events.Insert(e)
 	if err != nil {
-		app.serverErrorResponse(w, r, err)
+		switch {
+		case errors.Is(err, data.ErrDuplicateTitle):
+			v.AddError("title", "event with this title already exists")
+			app.failedValidationResponse(w, r, v.Errors)
+
+		case errors.Is(err, data.ErrCardConstraint):
+			v.AddError("card_id", "card is not present in the table")
+			app.failedValidationResponse(w, r, v.Errors)
+		default:
+			app.serverErrorResponse(w, r, err)
+		}
 		return
 	}
 
@@ -108,6 +118,7 @@ func (app *application) updateEventHandler(w http.ResponseWriter, r *http.Reques
 		Date        *data.Date `json:"date"`
 		TextBlocks  []string   `json:"text_blocks"`
 		Version     *int64     `json:"version"`
+		CardId      *int64     `json:"card_id"`
 	}
 
 	err = app.readJSON(w, r, &input)
@@ -134,6 +145,11 @@ func (app *application) updateEventHandler(w http.ResponseWriter, r *http.Reques
 
 	if input.TextBlocks != nil {
 		event.TextBlocks = input.TextBlocks
+	}
+	app.logger.PrintInfo(fmt.Sprintf("Card ID: %d", input.CardId), nil)
+
+	if input.CardId != nil {
+		event.CardId = *input.CardId
 	}
 
 	v := validation.New()

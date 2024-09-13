@@ -29,6 +29,7 @@ func (app *application) logRequests(next http.Handler) http.Handler {
 		//	return
 		//}
 		//app.logger.PrintInfo(string(reqInfo), nil)
+
 		properties := map[string]string{
 			"address":  r.RemoteAddr,
 			"method":   r.Method,

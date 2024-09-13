@@ -8,7 +8,9 @@ import (
 	"library/internal/config"
 	"library/internal/data"
 	"library/internal/logger"
+	"library/internal/mailer"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -29,6 +31,8 @@ type application struct {
 	config config.Config
 	logger *logger.Logger
 	models data.Models
+	mailer mailer.Mailer
+	wg     sync.WaitGroup
 }
 
 func main() {
@@ -50,6 +54,7 @@ func main() {
 		config: cfg,
 		logger: lgr,
 		models: data.NewModels(db),
+		mailer: mailer.New(cfg.STMP.Host, cfg.STMP.Port, cfg.STMP.Username, cfg.STMP.Password, cfg.STMP.Sender),
 	}
 
 	err = app.serve()

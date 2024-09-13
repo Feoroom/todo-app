@@ -1,0 +1,39 @@
+{{define "subject"}} Токен активации {{end}}
+
+{{define "plainBody"}}
+
+    Здравствуйте,
+
+    Для активации вашего аккаунта отправьте на этот запрос
+
+    "PUT /v1/users/activated"
+
+    такое тело запроса:
+
+    {"token": {{.tokenActivation}}
+
+    Данный токен является одноразовым и срок его хранения истекает через 3 дня.
+
+    TodoApp Team
+
+{{end}}
+users
+{{define "htmlBody"}}
+
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title></title>
+    </head>
+    <body>
+    <p>Здравствуйте,</p>
+    <p> Для активации вашего аккаунта отправьте этот запрос</p>
+    <p> "PUT /v1/users/activated"</p>
+    <p>с таким телом запроса:</p>
+    <p>{"token": {{.activationToken}}}</p>
+    <p>Данный токен является одноразовым и срок его хранения истекает через 3 дня.</p>
+    <p>TodoApp Team</p>
+    </body>
+    </html>
+
+{{end}}
