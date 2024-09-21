@@ -1,10 +1,14 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"golang.org/x/time/rate"
+	"library/internal/data"
+	"library/internal/validation"
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 )
@@ -96,6 +100,48 @@ func (app *application) rateLimit(next http.Handler) http.Handler {
 
 			mu.Unlock()
 		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (app *application) authenticate(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Vary", "Authorization")
+
+		authHeader := r.Header.Get("Authorization")
+
+		if authHeader == "" {
+			r = app.ctxSetUser(r, data.AnonymousUser)
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		authParts := strings.Split(authHeader, " ")
+		if len(authParts) != 2 || authParts[0] != "Bearer" {
+			app.invalidAuthenticationTokenResponse(w, r)
+		}
+
+		token := authParts[1]
+
+		v := validation.New()
+
+		if data.ValidateTokenPlainText(v, token); !v.Valid() {
+			app.invalidAuthenticationTokenResponse(w, r)
+			return
+		}
+
+		user, err := app.models.Users.GetForToken(data.ScopeAuthentication, token)
+		if err != nil {
+			switch {
+			case errors.Is(err, data.ErrRecordNotFound):
+				app.invalidAuthenticationTokenResponse(w, r)
+			default:
+				app.serverErrorResponse(w, r, err)
+			}
+			return
+		}
+		r = app.ctxSetUser(r, user)
 
 		next.ServeHTTP(w, r)
 	})

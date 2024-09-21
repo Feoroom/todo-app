@@ -198,3 +198,61 @@ func (app *application) activateUserHandle(w http.ResponseWriter, r *http.Reques
 		app.serverErrorResponse(w, r, err)
 	}
 }
+
+func (app *application) createAuthenticationToken(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+
+	var input struct {
+		Email    string
+		Password string
+	}
+
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	v := validation.New()
+
+	data.ValidateEmail(v, input.Email)
+	data.ValidatePlaintextPassword(v, input.Password)
+
+	if !v.Valid() {
+		app.failedValidationResponse(w, r, v.Errors)
+		return
+	}
+
+	user, err := app.models.Users.GetByEmail(input.Email)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			app.invalidCredentialsResponse(w, r)
+		default:
+			app.serverErrorResponse(w, r, err)
+		}
+		return
+	}
+
+	match, err := user.Password.Matches(input.Password)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	if !match {
+		app.invalidCredentialsResponse(w, r)
+		return
+	}
+
+	token, err := app.models.Tokens.New(user.ID, data.TokenDuration, data.ScopeAuthentication)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	err = app.writeJSON(w, http.StatusCreated, envelope{"authentication_token": token}, nil)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+}

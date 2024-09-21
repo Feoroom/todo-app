@@ -35,6 +35,8 @@ type UserModel struct {
 	DB *sql.DB
 }
 
+var AnonymousUser = &User{}
+
 func (p *password) Set(textPassword string) error {
 	hash, err := bcrypt.GenerateFromPassword([]byte(textPassword), 12)
 	if err != nil {
@@ -219,4 +221,8 @@ func (u UserModel) GetForToken(scope, tokenPlainText string) (*User, error) {
 	}
 
 	return &user, nil
+}
+
+func (u *User) IsAnonymous() bool {
+	return u == AnonymousUser
 }
