@@ -15,15 +15,15 @@ func (app *application) routes() http.Handler {
 	router.HandlerFunc(http.MethodGet, "/v1/info", app.info)
 
 	//router.HandlerFunc(http.MethodGet, "/v1/events/:id", app.showEventHandler)
-	router.GET("/v1/events", app.listEventHandler)
-	router.GET("/v1/events/:id", app.showEventHandler)
-	router.POST("/v1/events", app.createEventHandler)
-	router.PATCH("/v1/events/:id", app.updateEventHandler)
-	router.DELETE("/v1/events/:id", app.deleteEventHandler)
+	router.GET("/v1/events", app.requireActivatedUser(app.listEventHandler))
+	router.GET("/v1/events/:id", app.requireActivatedUser(app.showEventHandler))
+	router.POST("/v1/events", app.requireActivatedUser(app.createEventHandler))
+	router.PATCH("/v1/events/:id", app.requireActivatedUser(app.updateEventHandler))
+	router.DELETE("/v1/events/:id", app.requireActivatedUser(app.deleteEventHandler))
 
-	router.GET("/v1/cards/:id", app.showCardHandler)
-	router.POST("/v1/cards", app.createCardHandler)
-	router.PATCH("/v1/cards/:id", app.updateCardHandler)
+	router.GET("/v1/cards/:id", app.requireActivatedUser(app.showCardHandler))
+	router.POST("/v1/cards", app.requireActivatedUser(app.createCardHandler))
+	router.PATCH("/v1/cards/:id", app.requireActivatedUser(app.updateCardHandler))
 
 	router.POST("/v1/users", app.registerHandler)
 	router.PUT("/v1/users/activated", app.activateUserHandle)

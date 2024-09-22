@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"github.com/julienschmidt/httprouter"
 	"golang.org/x/time/rate"
 	"library/internal/data"
 	"library/internal/validation"
@@ -103,6 +104,32 @@ func (app *application) rateLimit(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+func (app *application) requireActivatedUser(next httprouter.Handle) httprouter.Handle {
+	fn := func(w http.ResponseWriter, r *http.Request, pm httprouter.Params) {
+		user := app.ctxGetUser(r)
+		if !user.Activated {
+			app.inactiveAccountResponse(w, r)
+			return
+		}
+
+		next(w, r, pm)
+	}
+
+	return app.requireAuthenticatedUser(fn)
+}
+
+func (app *application) requireAuthenticatedUser(next httprouter.Handle) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, pm httprouter.Params) {
+		user := app.ctxGetUser(r)
+		if user.IsAnonymous() {
+			app.unauthorizedResponse(w, r)
+			return
+		}
+
+		next(w, r, pm)
+	}
 }
 
 func (app *application) authenticate(next http.Handler) http.Handler {

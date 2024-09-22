@@ -1,5 +1,5 @@
 
-migration:
+migrate:
 	migrate create -seq -ext .sql -dir ./migrations ${name}
 
 up:

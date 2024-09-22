@@ -107,6 +107,7 @@ func (app *application) sendTokenHandler(w http.ResponseWriter, r *http.Request,
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):
 			v.AddError("email", "no matching email found")
+			app.failedValidationResponse(w, r, v.Errors)
 		default:
 			app.serverErrorResponse(w, r, err)
 		}
@@ -115,7 +116,6 @@ func (app *application) sendTokenHandler(w http.ResponseWriter, r *http.Request,
 
 	if user.Activated {
 		v.AddError("email", "user has been activated")
-		app.failedValidationResponse(w, r, v.Errors)
 		return
 	}
 

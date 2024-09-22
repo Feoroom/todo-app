@@ -15,7 +15,7 @@ func (app *application) ctxSetUser(r *http.Request, user *data.User) *http.Reque
 	return r.WithContext(ctx)
 }
 
-func (app *application) cxtGetUser(r *http.Request) *data.User {
+func (app *application) ctxGetUser(r *http.Request) *data.User {
 	user, ok := r.Context().Value(userCtxKey).(*data.User)
 	if !ok {
 		panic("missing user value in ctx")

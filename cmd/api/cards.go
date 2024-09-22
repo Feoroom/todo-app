@@ -26,7 +26,6 @@ func (app *application) showCardHandler(w http.ResponseWriter, r *http.Request, 
 		}
 		return
 	}
-
 	err = app.writeJSON(w, http.StatusOK, envelope{"card": card}, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
