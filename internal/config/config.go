@@ -3,6 +3,7 @@ package config
 import (
 	"flag"
 	"os"
+	"strings"
 )
 
 type Config struct {
@@ -26,6 +27,9 @@ type Config struct {
 		Password string
 		Sender   string
 	}
+	CORS struct {
+		AllowedOrigins []string
+	}
 }
 
 func (cfg *Config) SetEnvironment() {
@@ -47,6 +51,11 @@ func (cfg *Config) SetEnvironment() {
 	flag.StringVar(&cfg.STMP.Username, "smtp-username", "4e6131523774d9", "SMTP username")
 	flag.StringVar(&cfg.STMP.Password, "smtp-password", "e656e78aaac168", "STMP password")
 	flag.StringVar(&cfg.STMP.Sender, "smtp-sender", "Todo <no-reply@todo.goserv.ru>", "SMTP sender")
+
+	flag.Func("cors-allowed-origins", "Comma-separated list of allowed CORS origins", func(s string) error {
+		cfg.CORS.AllowedOrigins = strings.Fields(s)
+		return nil
+	})
 
 	flag.Parse()
 }

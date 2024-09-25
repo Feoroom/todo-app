@@ -26,6 +26,36 @@ func (app *application) recoverPanic(next http.Handler) http.Handler {
 	})
 }
 
+func (app *application) enableCors(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Vary", "Origin")
+		w.Header().Add("Vary", "Access-Control-Request-Method")
+
+		origin := r.Header.Get("Origin")
+
+		if origin != "" {
+			for i := range app.config.CORS.AllowedOrigins {
+				if origin == app.config.CORS.AllowedOrigins[i] {
+					w.Header().Set("Access-Control-Allow-Origin", origin)
+
+					if isPreflight(r) {
+						w.Header().Set("Access-Control-Allow-Methods", "OPTIONS, PUT, PATCH, DELETE")
+						w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+						w.WriteHeader(http.StatusOK)
+						return
+					}
+					break
+				}
+			}
+		}
+
+		//w.Header().Set("Access-Control-Allow-Origin", "*")
+
+		next.ServeHTTP(w, r)
+	})
+}
+
 func (app *application) logRequests(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//reqInfo, err := httputil.DumpRequest(r, false)
@@ -132,6 +162,26 @@ func (app *application) requireAuthenticatedUser(next httprouter.Handle) httprou
 	}
 }
 
+func (app *application) requirePermission(permission string, next httprouter.Handle) httprouter.Handle {
+	fn := func(w http.ResponseWriter, r *http.Request, pm httprouter.Params) {
+		user := app.ctxGetUser(r)
+
+		perm, err := app.models.Permissions.GetForUser(user.ID)
+		if err != nil {
+			app.serverErrorResponse(w, r, err)
+			return
+		}
+
+		if !perm.Include(permission) {
+			app.notPermittedResponse(w, r)
+			return
+		}
+
+		next(w, r, pm)
+	}
+	return app.requireAuthenticatedUser(fn)
+}
+
 func (app *application) authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Vary", "Authorization")
@@ -168,6 +218,7 @@ func (app *application) authenticate(next http.Handler) http.Handler {
 			}
 			return
 		}
+
 		r = app.ctxSetUser(r, user)
 
 		next.ServeHTTP(w, r)

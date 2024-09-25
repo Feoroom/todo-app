@@ -2,7 +2,8 @@
 
 create table if not exists permissions (
     id bigserial primary key,
-    permission text not null unique
+    permission text not null unique,
+    description text
 );
 
 create table if not exists users_permissions (

@@ -223,6 +223,19 @@ func (u UserModel) GetForToken(scope, tokenPlainText string) (*User, error) {
 	return &user, nil
 }
 
+func (u UserModel) SetRole(role string, userId int64) error {
+	// TODO: optimize query (using with clause)
+	q := `insert into users_roles
+        (user_id, role_id)
+        values ($1, (select id from roles where role=$2))`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	_, err := u.DB.ExecContext(ctx, q, userId, role)
+	return err
+}
+
 func (u *User) IsAnonymous() bool {
 	return u == AnonymousUser
 }

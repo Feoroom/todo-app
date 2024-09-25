@@ -1,7 +1,10 @@
 package main
 
 import (
+	"expvar"
 	"github.com/julienschmidt/httprouter"
+	"github.com/justinas/alice"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"net/http"
 )
 
@@ -13,6 +16,8 @@ func (app *application) routes() http.Handler {
 	//router.GET("/swagger/:any", httpSwagger.WrapHandler)
 
 	router.HandlerFunc(http.MethodGet, "/v1/info", app.info)
+	router.Handler(http.MethodGet, "/v1/prom-metrics", promhttp.Handler())
+	router.Handler(http.MethodGet, "/v1/metrics", expvar.Handler())
 
 	//router.HandlerFunc(http.MethodGet, "/v1/events/:id", app.showEventHandler)
 	router.GET("/v1/events", app.requireActivatedUser(app.listEventHandler))
@@ -31,5 +36,6 @@ func (app *application) routes() http.Handler {
 	router.POST("/v1/tokens/activation", app.sendTokenHandler)
 	router.POST("/v1/tokens/authentication", app.createAuthenticationToken)
 
-	return app.logRequests(app.recoverPanic(app.rateLimit(app.authenticate(router))))
+	return alice.New(app.logRequests, app.recoverPanic,
+		app.enableCors, app.rateLimit, app.authenticate).Then(router)
 }

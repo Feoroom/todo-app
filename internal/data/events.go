@@ -130,12 +130,12 @@ func (e EventModel) GetAll(title string, date Date, filters Filters) ([]*Event, 
 	// если выбрана такая дата date = current_date, то выводятся все элементы
 	// возможно просто нужно задать другое значение по умолчанию
 	q := fmt.Sprintf(`
-		select count(*) over(), id, created_at, title, description, text_blocks, date, version, card_id
-		from events
-		where (to_tsvector('simple', title) @@ plainto_tsquery('simple', $1) or $1 = '')
-		and (date = $2 or $2 = current_date)
-		order by %s %s, id ASC
-		limit $3 offset $4 `, filters.sortColumn(), filters.sortDirection())
+        select count(*) over(), id, created_at, title, description, text_blocks, date, version, card_id
+        from events
+        where (to_tsvector('web', title) @@ plainto_tsquery('web', $1) or $1 = '')
+        and (date = $2 or $2 = current_date)
+        order by %s %s, id ASC
+        limit $3 offset $4 `, filters.sortColumn(), filters.sortDirection())
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()

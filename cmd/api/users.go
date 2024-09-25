@@ -60,6 +60,12 @@ func (app *application) registerHandler(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 
+	err = app.models.Users.SetRole(data.UserRole, user.ID)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
 	app.background(func() {
 
 		emailData := map[string]interface{}{

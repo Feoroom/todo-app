@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            fetch('http://localhost:8000/v1/info')
+                .then(resp => resp.json())
+                .then(json => {
+                    console.log(json);
+                    document.getElementById('app').innerHTML = JSON.stringify(json);
+                })
+                .catch(err => document.getElementById('app').innerHTML = err);
+        });
+    </script>
+    <title>Document</title>
+</head>
+<body>
+    <h1>Hello!</h1>
+    <pre id="app">
+    </pre>
+</body>
+</html>

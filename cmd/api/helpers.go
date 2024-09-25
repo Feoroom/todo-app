@@ -145,6 +145,11 @@ func (app *application) readDate(qs url.Values, key string, defaultValue time.Ti
 	return t
 }
 
+// isPreflight checks if the request is a preflight request.
+func isPreflight(r *http.Request) bool {
+	return r.Method == http.MethodOptions && r.Header.Get("Access-Control-Request-Method") != ""
+}
+
 func (app *application) background(fn func()) {
 	app.wg.Add(1)
 

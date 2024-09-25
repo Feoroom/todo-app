@@ -69,6 +69,11 @@ func (app *application) inactiveAccountResponse(w http.ResponseWriter, r *http.R
 	app.errorResponse(w, r, http.StatusForbidden, message)
 }
 
+func (app *application) notPermittedResponse(w http.ResponseWriter, r *http.Request) {
+	message := "you do not have the necessary permissions to access this resource"
+	app.errorResponse(w, r, http.StatusForbidden, message)
+}
+
 func (app *application) invalidCredentialsResponse(w http.ResponseWriter, r *http.Request) {
 
 	app.errorResponse(w, r, http.StatusUnauthorized, "you have entered an invalid authentication credentials")

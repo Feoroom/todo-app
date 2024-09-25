@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Preflight request</title>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      fetch('http://localhost:8000/v1/tokens/authentication', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: 'Moses.Stoltenberg39@gmail.com',
+          password: '12345678'
+        })
+      }).then(resp => resp.text())
+              .then(text => document.getElementById('app').innerHTML = text)
+              .catch(err => document.getElementById('app').innerHTML = err);
+    })
+  </script>
+</head>
+
+<body>
+
+<div id="app"></div>
+
+</body>
+</html>
