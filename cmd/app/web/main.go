@@ -15,6 +15,8 @@ func main() {
 	http.HandleFunc("/", index)
 	http.HandleFunc("/preflight", preflight)
 
+	log.Println("HELLOOOOOOO")
+
 	err := http.ListenAndServe(*addr, nil)
 	if err != nil {
 		panic(err)

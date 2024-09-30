@@ -2,7 +2,6 @@ package data
 
 import (
 	"errors"
-	"fmt"
 	"strconv"
 	"time"
 )
@@ -20,7 +19,7 @@ type Date struct {
 }
 
 func (t Date) MarshalJSON() ([]byte, error) {
-	stamp := fmt.Sprintf("%s", t.Format(layout))
+	stamp := t.Format(layout)
 	qStamp := strconv.Quote(stamp)
 	return []byte(qStamp), nil
 }

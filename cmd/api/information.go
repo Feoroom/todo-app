@@ -1,19 +1,17 @@
 package main
 
 import (
+	"library/internal/metrics"
 	"net/http"
 )
 
-// @summary Info handler
-// @description Info Handler
-// @router /v1/info [get]
-func (app *application) info(w http.ResponseWriter, r *http.Request) {
+func (app *Application) info(w http.ResponseWriter, r *http.Request) {
 
 	env := envelope{
 		"status": "available",
 		"system_info": map[string]string{
 			"env":     app.config.Env,
-			"version": version,
+			"version": metrics.Version,
 		},
 	}
 
@@ -21,8 +19,4 @@ func (app *application) info(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}
-}
-
-func ping(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("OK"))
 }

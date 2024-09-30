@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -12,11 +13,11 @@ import (
 	"time"
 )
 
-func (app *application) serve() error {
+func (app *Application) Serve() error {
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", app.config.Port),
 		Handler:      app.routes(),
-		ErrorLog:     log.New(app.logger, "", 0),
+		ErrorLog:     log.New(os.Stdout, "", 0),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,
@@ -31,9 +32,9 @@ func (app *application) serve() error {
 
 		s := <-quit
 
-		app.logger.PrintInfo("shutting down server", map[string]string{
-			"signal": s.String(),
-		})
+		app.logger.Info("shutting down server",
+			slog.String("signal", s.String()),
+		)
 
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
@@ -43,18 +44,18 @@ func (app *application) serve() error {
 			shutdownError <- err
 		}
 
-		app.logger.PrintInfo("completing background tasks", map[string]string{
-			"addr": srv.Addr,
-		})
+		app.logger.Info("completing background tasks",
+			slog.String("addr", srv.Addr),
+		)
 
 		app.wg.Wait()
 		shutdownError <- nil
 	}()
 
-	app.logger.PrintInfo("starting server", map[string]string{
-		"env":  app.config.Env,
-		"addr": srv.Addr,
-	})
+	app.logger.Info("starting server",
+		slog.String("env", app.config.Env),
+		slog.String("addr", srv.Addr),
+	)
 
 	err := srv.ListenAndServe()
 	if !errors.Is(err, http.ErrServerClosed) {
@@ -66,9 +67,9 @@ func (app *application) serve() error {
 		return err
 	}
 
-	app.logger.PrintInfo("stopped server", map[string]string{
-		"addr": srv.Addr,
-	})
+	app.logger.Info("stopped server",
+		slog.String("addr", srv.Addr),
+	)
 
 	return nil
 }

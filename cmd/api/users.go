@@ -9,7 +9,7 @@ import (
 	"net/http"
 )
 
-func (app *application) registerHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (app *Application) registerHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 	var input struct {
 		Name     string `json:"name"`
@@ -75,7 +75,7 @@ func (app *application) registerHandler(w http.ResponseWriter, r *http.Request, 
 
 		err = app.mailer.Send(user.Email, "welcome.gohtml", emailData)
 		if err != nil {
-			app.logger.PrintError(err, nil)
+			app.logger.Error(err.Error())
 		}
 	})
 
@@ -86,7 +86,7 @@ func (app *application) registerHandler(w http.ResponseWriter, r *http.Request, 
 	}
 }
 
-func (app *application) sendTokenHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (app *Application) sendTokenHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 	// TODO: body must not be empty - сделать чтобы выводилось сообщение вместо ошибки
 	var input struct {
@@ -137,7 +137,7 @@ func (app *application) sendTokenHandler(w http.ResponseWriter, r *http.Request,
 		}
 		err = app.mailer.Send(user.Email, "token.gohtml", emailData)
 		if err != nil {
-			app.logger.PrintError(err, nil)
+			app.logger.Error(err.Error())
 		}
 	})
 
@@ -148,7 +148,7 @@ func (app *application) sendTokenHandler(w http.ResponseWriter, r *http.Request,
 	}
 }
 
-func (app *application) activateUserHandle(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (app *Application) activateUserHandle(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 	var input struct {
 		Token string `json:"token"`
@@ -205,7 +205,7 @@ func (app *application) activateUserHandle(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-func (app *application) createAuthenticationToken(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (app *Application) createAuthenticationToken(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 	var input struct {
 		Email    string

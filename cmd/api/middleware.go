@@ -2,19 +2,23 @@ package main
 
 import (
 	"errors"
+	"expvar"
 	"fmt"
+	"github.com/felixge/httpsnoop"
 	"github.com/julienschmidt/httprouter"
+	"github.com/tomasen/realip"
 	"golang.org/x/time/rate"
 	"library/internal/data"
 	"library/internal/validation"
-	"net"
+	"log/slog"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 )
 
-func (app *application) recoverPanic(next http.Handler) http.Handler {
+func (app *Application) recoverPanic(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
@@ -26,7 +30,7 @@ func (app *application) recoverPanic(next http.Handler) http.Handler {
 	})
 }
 
-func (app *application) enableCors(next http.Handler) http.Handler {
+func (app *Application) enableCors(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Vary", "Origin")
 		w.Header().Add("Vary", "Access-Control-Request-Method")
@@ -56,7 +60,7 @@ func (app *application) enableCors(next http.Handler) http.Handler {
 	})
 }
 
-func (app *application) logRequests(next http.Handler) http.Handler {
+func (app *Application) logRequests(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//reqInfo, err := httputil.DumpRequest(r, false)
 		//if err != nil {
@@ -65,20 +69,36 @@ func (app *application) logRequests(next http.Handler) http.Handler {
 		//}
 		//app.logger.PrintInfo(string(reqInfo), nil)
 
-		properties := map[string]string{
-			"address":  r.RemoteAddr,
-			"method":   r.Method,
-			"uri":      r.URL.RequestURI(),
-			"protocol": r.Proto,
-		}
-
-		app.logger.PrintInfo("Log request information", properties)
+		app.logger.Info("Log request information",
+			slog.String("address", realip.FromRequest(r)),
+			slog.String("method", r.Method),
+			slog.String("uri", r.URL.RequestURI()),
+			slog.String("protocol", r.Proto),
+		)
 
 		next.ServeHTTP(w, r)
 	})
 }
 
-func (app *application) rateLimit(next http.Handler) http.Handler {
+func (app *Application) metrics(next http.Handler) http.Handler {
+	totalRequestsReceived := expvar.NewInt("total_requests_received")
+	totalResponsesSent := expvar.NewInt("total_responses_sent")
+	totalProcessingTime := expvar.NewInt("total_processing_time")
+	totalResponsesByStatus := expvar.NewMap("responses_status_codes")
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		totalRequestsReceived.Add(1)
+
+		metrics := httpsnoop.CaptureMetrics(next, w, r)
+
+		totalResponsesSent.Add(1)
+		totalProcessingTime.Add(metrics.Duration.Microseconds())
+		totalResponsesByStatus.Add(strconv.Itoa(metrics.Code), 1)
+
+	})
+}
+
+func (app *Application) rateLimit(next http.Handler) http.Handler {
 
 	type client struct {
 		limiter  *rate.Limiter
@@ -107,11 +127,12 @@ func (app *application) rateLimit(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		if app.config.Limiter.Enabled {
-			ip, _, err := net.SplitHostPort(r.RemoteAddr)
-			if err != nil {
-				app.serverErrorResponse(w, r, err)
-				return
-			}
+			//ip, _, err := net.SplitHostPort(r.RemoteAddr)
+			//if err != nil {
+			//	app.serverErrorResponse(w, r, err)
+			//	return
+			//}
+			ip := realip.FromRequest(r)
 
 			mu.Lock()
 
@@ -136,7 +157,7 @@ func (app *application) rateLimit(next http.Handler) http.Handler {
 	})
 }
 
-func (app *application) requireActivatedUser(next httprouter.Handle) httprouter.Handle {
+func (app *Application) requireActivatedUser(next httprouter.Handle) httprouter.Handle {
 	fn := func(w http.ResponseWriter, r *http.Request, pm httprouter.Params) {
 		user := app.ctxGetUser(r)
 		if !user.Activated {
@@ -150,7 +171,7 @@ func (app *application) requireActivatedUser(next httprouter.Handle) httprouter.
 	return app.requireAuthenticatedUser(fn)
 }
 
-func (app *application) requireAuthenticatedUser(next httprouter.Handle) httprouter.Handle {
+func (app *Application) requireAuthenticatedUser(next httprouter.Handle) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, pm httprouter.Params) {
 		user := app.ctxGetUser(r)
 		if user.IsAnonymous() {
@@ -162,7 +183,7 @@ func (app *application) requireAuthenticatedUser(next httprouter.Handle) httprou
 	}
 }
 
-func (app *application) requirePermission(permission string, next httprouter.Handle) httprouter.Handle {
+func (app *Application) requirePermission(permission string, next httprouter.Handle) httprouter.Handle {
 	fn := func(w http.ResponseWriter, r *http.Request, pm httprouter.Params) {
 		user := app.ctxGetUser(r)
 
@@ -182,7 +203,7 @@ func (app *application) requirePermission(permission string, next httprouter.Han
 	return app.requireAuthenticatedUser(fn)
 }
 
-func (app *application) authenticate(next http.Handler) http.Handler {
+func (app *Application) authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Vary", "Authorization")
 

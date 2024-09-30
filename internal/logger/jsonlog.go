@@ -3,6 +3,7 @@ package logger
 import (
 	"encoding/json"
 	"io"
+	"log/slog"
 	"os"
 	"runtime/debug"
 	"sync"
@@ -16,6 +17,12 @@ const (
 	LevelError
 	LevelFatal
 	LevelOff
+)
+
+const (
+	Local string = "local"
+	Dev   string = "dev"
+	Prod  string = "prod"
 )
 
 func (l Level) String() string {
@@ -94,13 +101,22 @@ func (l *Logger) PrintFatal(err error, properties map[string]string) {
 	os.Exit(1)
 }
 
-//func (l *Logger) LogRequest(r *http.Request) {
-//	properties := map[string]string{
-//		"address":  r.RemoteAddr,
-//		"method":   r.Method,
-//		"uri":      r.URL.RequestURI(),
-//		"protocol": r.Proto,
-//	}
-//
-//	l.print(LevelInfo, "Log request info", properties)
-//}
+func SetSlogLogger(env string) *slog.Logger {
+	var log *slog.Logger
+	switch env {
+	case Local:
+		log = slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelDebug,
+		}))
+	case Dev:
+		log = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelDebug,
+		}))
+	case Prod:
+		log = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		}))
+	}
+
+	return log
+}

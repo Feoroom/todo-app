@@ -9,7 +9,7 @@ import (
 	"net/http"
 )
 
-func (app *application) showCardHandler(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+func (app *Application) showCardHandler(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	id, err := app.readID(params)
 	if err != nil {
 		app.notFoundResponse(w, r)
@@ -32,7 +32,7 @@ func (app *application) showCardHandler(w http.ResponseWriter, r *http.Request, 
 	}
 }
 
-func (app *application) createCardHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (app *Application) createCardHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	var input struct {
 		Title string `json:"title"`
 	}
@@ -71,7 +71,7 @@ func (app *application) createCardHandler(w http.ResponseWriter, r *http.Request
 	}
 }
 
-func (app *application) updateCardHandler(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+func (app *Application) updateCardHandler(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 
 	id, err := app.readID(params)
 	if err != nil {

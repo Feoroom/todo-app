@@ -2,6 +2,8 @@ package config
 
 import (
 	"flag"
+	"fmt"
+	"library/internal/metrics"
 	"os"
 	"strings"
 )
@@ -33,8 +35,9 @@ type Config struct {
 }
 
 func (cfg *Config) SetEnvironment() {
+
 	flag.IntVar(&cfg.Port, "port", 8000, "server Port")
-	flag.StringVar(&cfg.Env, "env", "dev", "Environment(dev|stag|prod)")
+	flag.StringVar(&cfg.Env, "env", "dev", "Environment(dev|local|prod)")
 
 	flag.StringVar(&cfg.DB.DSN, "db-dsn", os.Getenv("TODO_DB_DSN"), "PostgreSQL DSN")
 
@@ -57,5 +60,13 @@ func (cfg *Config) SetEnvironment() {
 		return nil
 	})
 
+	displayVersion := flag.Bool("version", false, "Print version and exit")
+
 	flag.Parse()
+
+	if *displayVersion {
+		fmt.Printf("API Version %s\n", metrics.Version)
+		fmt.Printf("Build time %s\n", metrics.BuildTime)
+		os.Exit(0)
+	}
 }

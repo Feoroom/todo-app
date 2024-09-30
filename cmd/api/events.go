@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func (app *application) createEventHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (app *Application) createEventHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 	var input struct {
 		Title       string    `json:"title"`
@@ -68,7 +68,7 @@ func (app *application) createEventHandler(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-func (app *application) showEventHandler(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+func (app *Application) showEventHandler(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 
 	id, err := app.readID(params)
 	if err != nil {
@@ -93,7 +93,7 @@ func (app *application) showEventHandler(w http.ResponseWriter, r *http.Request,
 	}
 }
 
-func (app *application) updateEventHandler(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+func (app *Application) updateEventHandler(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 
 	id, err := app.readID(params)
 	if err != nil {
@@ -146,7 +146,7 @@ func (app *application) updateEventHandler(w http.ResponseWriter, r *http.Reques
 	if input.TextBlocks != nil {
 		event.TextBlocks = input.TextBlocks
 	}
-	app.logger.PrintInfo(fmt.Sprintf("Card ID: %d", input.CardId), nil)
+	app.logger.Info(fmt.Sprintf("Card ID: %d", input.CardId))
 
 	if input.CardId != nil {
 		event.CardId = *input.CardId
@@ -178,7 +178,7 @@ func (app *application) updateEventHandler(w http.ResponseWriter, r *http.Reques
 
 }
 
-func (app *application) deleteEventHandler(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+func (app *Application) deleteEventHandler(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 
 	id, err := app.readID(params)
 	if err != nil {
@@ -204,7 +204,7 @@ func (app *application) deleteEventHandler(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-func (app *application) listEventHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (app *Application) listEventHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// Добавлять фильтрацию по card_id?
 	var input struct {
 		Title string

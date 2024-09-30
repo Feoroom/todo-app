@@ -8,18 +8,16 @@ import (
 	"net/http"
 )
 
-func (app *application) routes() http.Handler {
+func (app *Application) routes() http.Handler {
 	router := httprouter.New()
 
 	router.NotFound = http.HandlerFunc(app.notFoundResponse)
 	router.MethodNotAllowed = http.HandlerFunc(app.methodNotAllowed)
-	//router.GET("/swagger/:any", httpSwagger.WrapHandler)
 
 	router.HandlerFunc(http.MethodGet, "/v1/info", app.info)
-	router.Handler(http.MethodGet, "/v1/prom-metrics", promhttp.Handler())
-	router.Handler(http.MethodGet, "/v1/metrics", expvar.Handler())
+	router.Handler(http.MethodGet, "/v1/metrics", promhttp.Handler())
+	router.Handler(http.MethodGet, "/debug/vars", expvar.Handler())
 
-	//router.HandlerFunc(http.MethodGet, "/v1/events/:id", app.showEventHandler)
 	router.GET("/v1/events", app.requireActivatedUser(app.listEventHandler))
 	router.GET("/v1/events/:id", app.requireActivatedUser(app.showEventHandler))
 	router.POST("/v1/events", app.requireActivatedUser(app.createEventHandler))
@@ -36,6 +34,6 @@ func (app *application) routes() http.Handler {
 	router.POST("/v1/tokens/activation", app.sendTokenHandler)
 	router.POST("/v1/tokens/authentication", app.createAuthenticationToken)
 
-	return alice.New(app.logRequests, app.recoverPanic,
+	return alice.New(app.metrics, app.logRequests, app.recoverPanic,
 		app.enableCors, app.rateLimit, app.authenticate).Then(router)
 }

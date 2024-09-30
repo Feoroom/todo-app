@@ -85,12 +85,12 @@ func (c CardModel) Insert(card *Card) error {
 	return c.DB.QueryRowContext(ctx, q, card.Title).Scan(&card.ID, &card.CreatedAt)
 }
 
-func (c CardModel) Update (card *Card) error {
+func (c CardModel) Update(card *Card) error {
 	q := `update cards
 		set title=$1
 		where id=$2`
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	_, err := c.DB.ExecContext(ctx, q, card.Title, card.ID)
